@@ -45,8 +45,13 @@ def fetch_recent_form_d_entries(limit: int = 10) -> List[Dict[str, Any]]:
 
     filings: List[Dict[str, Any]] = []
 
-    for entry in root.findall("atom:entry", namespaces)[:limit]:
-        title = entry.findtext("atom:title", default="", namespaces=namespaces)
+    for entry in root.findall("atom:entry", namespaces):
+        title = entry.findtext("atom:title", default="", namespaces=namespaces).strip()
+
+        # Only keep actual Form D and Form D/A (amendment) filings
+        if not (title.startswith("D -") or title.startswith("D/A -")):
+            continue
+
         link_elem = entry.find("atom:link", namespaces=namespaces)
         filing_url = link_elem.attrib.get("href", "") if link_elem is not None else ""
         summary = entry.findtext("atom:summary", default="", namespaces=namespaces)
@@ -54,12 +59,15 @@ def fetch_recent_form_d_entries(limit: int = 10) -> List[Dict[str, Any]]:
 
         filings.append(
             {
-                "title": title.strip(),
+                "title": title,
                 "url": filing_url.strip(),
                 "summary": summary.strip(),
                 "updated_at": updated.strip(),
             }
         )
+
+        if len(filings) >= limit:
+            break
 
     return filings
 
