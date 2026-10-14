@@ -1,0 +1,15 @@
+# Python environment
+.venv/
+__pycache__/
+*.pyc
+
+# Data storage (don't commit raw datasets or PDFs)
+data/
+*.pdf
+*.csv
+*.xlsx
+*.parquet
+
+# VS Code & environment files
+.vscode/
+.env
