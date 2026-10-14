@@ -10,3 +10,7 @@ pandas>=2.2.0
 
 # Environment variables (API keys, SEC User-Agent credentials)
 python-dotenv>=1.0.0
+
+# Interactive dashboard and visualization
+streamlit>=1.65.0
+plotly>=7.1.0

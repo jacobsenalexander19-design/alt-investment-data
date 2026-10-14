@@ -10,7 +10,8 @@ import requests
 load_dotenv()
 
 SEC_USER_AGENT = os.getenv("SEC_USER_AGENT", "DataExplorer research@example.com")
-FEED_URL = "https://www.sec.gov/cgi-bin/browse-edgar?action=getcurrent&type=D&count=20&output=atom"
+# Request 100 entries from the SEC feed so we can filter at least 30 pure Form D filings
+FEED_URL = "https://www.sec.gov/cgi-bin/browse-edgar?action=getcurrent&type=D&count=100&output=atom"
 
 
 def get_sec_session() -> requests.Session:
@@ -26,20 +27,12 @@ def get_sec_session() -> requests.Session:
     return session
 
 
-def fetch_recent_form_d_entries(limit: int = 10) -> List[Dict[str, Any]]:
-    """Fetch the latest Form D filings from the SEC EDGAR real-time feed.
-
-    Args:
-        limit: Number of recent filings to return.
-
-    Returns:
-        A list of dictionaries containing metadata for each filing.
-    """
+def fetch_recent_form_d_entries(limit: int = 30) -> List[Dict[str, Any]]:
+    """Fetch the latest Form D filings from the SEC EDGAR real-time feed."""
     session = get_sec_session()
     response = session.get(FEED_URL, timeout=10)
     response.raise_for_status()
 
-    # SEC returns an Atom XML feed
     root = ET.fromstring(response.content)
     namespaces = {"atom": "http://www.w3.org/2005/Atom"}
 
@@ -48,7 +41,7 @@ def fetch_recent_form_d_entries(limit: int = 10) -> List[Dict[str, Any]]:
     for entry in root.findall("atom:entry", namespaces):
         title = entry.findtext("atom:title", default="", namespaces=namespaces).strip()
 
-        # Only keep actual Form D and Form D/A (amendment) filings
+        # Keep only genuine Form D and Form D/A (amendment) filings
         if not (title.startswith("D -") or title.startswith("D/A -")):
             continue
 
@@ -73,10 +66,5 @@ def fetch_recent_form_d_entries(limit: int = 10) -> List[Dict[str, Any]]:
 
 
 if __name__ == "__main__":
-    print(f"Fetching recent Form D filings using User-Agent: {SEC_USER_AGENT}...")
-    recent_filings = fetch_recent_form_d_entries(limit=5)
-
-    for idx, filing in enumerate(recent_filings, start=1):
-        print(f"\n[{idx}] {filing['title']}")
-        print(f"    Date: {filing['updated_at']}")
-        print(f"    Filing URL: {filing['url']}")
+    entries = fetch_recent_form_d_entries(limit=10)
+    print(f"Successfully fetched {len(entries)} pure Form D filings.")
